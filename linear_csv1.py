@@ -23,8 +23,11 @@ common_df = common_df.dropna()
 
 # 변수별 데이터 중앙값으로 통합
 variables = ["Profit", "GNI", "Price"]
-common_df["Median_Variable"] = (
-    common_df.groupby("Year")[variables].median().reset_index(drop=True)
+# 변수별 데이터 중앙값으로 통합
+median_values = common_df.groupby("Year")[variables].median().reset_index()
+common_df = common_df.merge(median_values, on="Year", suffixes=("", "_Median"))
+common_df["Median_Variable"] = common_df[[f"{var}_Median" for var in variables]].median(
+    axis=1
 )
 # Median_Variable 열을 숫자형으로 변환
 common_df["Median_Variable"] = pd.to_numeric(
@@ -36,6 +39,7 @@ common_df = common_df.dropna(subset=["Median_Variable", "SMP"])
 
 # Median_Variable 확인
 print(common_df[["Year", "Median_Variable"]].head())
+
 
 # 하이퍼파라미터 조정용 변수
 hyperparameters = {
