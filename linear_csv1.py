@@ -19,6 +19,8 @@ common_df["Profit"] = pd.to_numeric(common_df["Profit"], errors="coerce")
 common_df["GNI"] = pd.to_numeric(common_df["GNI"], errors="coerce")
 common_df["Price"] = pd.to_numeric(common_df["Price"], errors="coerce")
 common_df["SMP"] = pd.to_numeric(common_df["SMP"], errors="coerce")
+common_df["Year"] = pd.to_numeric(common_df["Year"], errors="coerce")
+
 common_df = common_df.dropna()
 
 # 변수별 데이터 중앙값으로 통합
@@ -101,7 +103,7 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
     model.fit(X_lstm, y_lstm, epochs=epochs, batch_size=batch_size, verbose=0)
 
     # 예측
-    future_years = list(range(int(common_df["Year"]).min(), 2026))
+    future_years = list(range(common_df["Year"].min(), 2026))
     last_input = X_lstm[-1]
     future_predictions = []
 
