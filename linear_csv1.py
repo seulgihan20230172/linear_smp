@@ -21,8 +21,13 @@ common_df["Price"] = pd.to_numeric(common_df["Price"], errors="coerce")
 common_df["SMP"] = pd.to_numeric(common_df["SMP"], errors="coerce")
 common_df = common_df.dropna()
 
-# 하이퍼파라미터 조정용 변수
+# 변수별 데이터 중앙값으로 통합
 variables = ["Profit", "GNI", "Price"]
+common_df["Median_Variable"] = (
+    common_df.groupby("Year")[variables].median().reset_index(drop=True)
+)
+
+# 하이퍼파라미터 조정용 변수
 hyperparameters = {
     "layers": list(range(1, 11)),
     "units": [32, 50, 64],
@@ -82,11 +87,11 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
     model.fit(X_lstm, y_lstm, epochs=epochs, batch_size=batch_size, verbose=0)
 
     # 예측
-    future_years = [2023, 2024, 2025]
+    future_years = list(range(common_df["Year"].min(), 2026))
     last_input = X_lstm[-1]
     future_predictions = []
 
-    for _ in future_years:
+    for _ in future_years[len(X_lstm) :]:
         next_pred_scaled = model.predict(
             last_input.reshape(1, time_steps, -1), verbose=0
         )
@@ -94,86 +99,84 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
         future_predictions.append(next_pred[0][0])
         last_input = np.append(last_input[1:], next_pred_scaled, axis=0)
 
-    return future_predictions
+    return future_years, future_predictions
 
 
-# 하이퍼파라미터 조합 테스트
-for var in variables:
-    try:
-        data = common_df[["Year", var, "SMP"]].sort_values("Year")
-        X = data[[var]].values
-        y = data["SMP"].values
+# 모델 평가 및 결과 저장
+try:
+    data = common_df[["Year", "Median_Variable", "SMP"]].sort_values("Year")
+    X = data[["Median_Variable"]].values
+    y = data["SMP"].values
 
-        scaler_X = MinMaxScaler()
-        scaler_y = MinMaxScaler()
-        X_scaled = scaler_X.fit_transform(X)
-        y_scaled = scaler_y.fit_transform(y.reshape(-1, 1))
+    scaler_X = MinMaxScaler()
+    scaler_y = MinMaxScaler()
+    X_scaled = scaler_X.fit_transform(X)
+    y_scaled = scaler_y.fit_transform(y.reshape(-1, 1))
 
-        time_steps = 3
-        for layers in hyperparameters["layers"]:
-            for units in hyperparameters["units"]:
-                for epochs in hyperparameters["epochs"]:
-                    for batch_size in hyperparameters["batch_size"]:
-                        for activation in hyperparameters["activation"]:
-                            for optimizer in hyperparameters["optimizer"]:
-                                for loss in hyperparameters["loss"]:
-                                    predictions = evaluate_model(
-                                        X_scaled,
-                                        y_scaled,
-                                        scaler_y,
-                                        time_steps,
-                                        {
-                                            "layers": layers,
-                                            "units": units,
-                                            "epochs": epochs,
-                                            "batch_size": batch_size,
-                                            "activation": activation,
-                                            "optimizer": optimizer,
-                                            "loss": loss,
-                                        },
-                                    )
-                                    # 정답값 (2023, 2024)
-                                    true_values = [167.11, 128.39]
-                                    mape = mean_absolute_percentage_error(
-                                        true_values[: len(predictions)],
-                                        predictions[: len(true_values)],
-                                    )
-                                    results.append(
-                                        {
-                                            "Variable": var,
-                                            "Layers": layers,
-                                            "Units": units,
-                                            "Epochs": epochs,
-                                            "Batch Size": batch_size,
-                                            "Activation": activation,
-                                            "Optimizer": optimizer,
-                                            "Loss": loss,
-                                            "Predictions": predictions,
-                                            "MAPE": mape,
-                                        }
-                                    )
-    except Exception as e:
-        print(f"Skipping variable {var} due to error: {e}")
+    time_steps = 3
+    for layers in hyperparameters["layers"]:
+        for units in hyperparameters["units"]:
+            for epochs in hyperparameters["epochs"]:
+                for batch_size in hyperparameters["batch_size"]:
+                    for activation in hyperparameters["activation"]:
+                        for optimizer in hyperparameters["optimizer"]:
+                            for loss in hyperparameters["loss"]:
+                                future_years, predictions = evaluate_model(
+                                    X_scaled,
+                                    y_scaled,
+                                    scaler_y,
+                                    time_steps,
+                                    {
+                                        "layers": layers,
+                                        "units": units,
+                                        "epochs": epochs,
+                                        "batch_size": batch_size,
+                                        "activation": activation,
+                                        "optimizer": optimizer,
+                                        "loss": loss,
+                                    },
+                                )
+                                # 정답값 (2023, 2024)
+                                true_values = [167.11, 128.39]
+                                mape = mean_absolute_percentage_error(
+                                    true_values[: len(predictions)],
+                                    predictions[: len(true_values)],
+                                )
+                                results.append(
+                                    {
+                                        "Layers": layers,
+                                        "Units": units,
+                                        "Epochs": epochs,
+                                        "Batch Size": batch_size,
+                                        "Activation": activation,
+                                        "Optimizer": optimizer,
+                                        "Loss": loss,
+                                        "Predictions": predictions,
+                                        "MAPE": mape,
+                                    }
+                                )
+except Exception as e:
+    print(f"Error occurred: {e}")
 
-# 결과 저장 및 출력
+# 결과 저장
 results_df = pd.DataFrame(results)
 results_df.to_csv("lstm_results.csv", index=False)
-print("Results saved to lstm_results.csv")
 
-# 그래프 시각화
-for result in results:
-    predictions = result["Predictions"]
-    true_values = [167.11, 128.39]
-    future_years = [2023, 2024, 2025]
+# 최적의 설정 찾기 (최소 MAPE)
+best_result = min(results, key=lambda x: x["MAPE"])
 
-    plt.figure(figsize=(8, 5))
-    plt.plot(future_years, predictions, label="Predictions", marker="o")
-    plt.plot(
-        future_years[: len(true_values)], true_values, label="True Values", marker="o"
-    )
-    plt.title(f"LSTM Predictions for {result['Variable']}")
-    plt.xlabel("Year")
-    plt.ylabel("SMP")
-    plt.legend()
-    plt.grid()
-    plt.show()
+# 최적 설정 그래프 시각화 및 저장
+plt.figure(figsize=(8, 5))
+plt.plot(best_result["Predictions"], label="Predictions", marker="o")
+plt.plot([167.11, 128.39], label="True Values", marker="o")
+plt.title(
+    f"Best Configuration: Layers={best_result['Layers']}, Units={best_result['Units']}, Epochs={best_result['Epochs']}"
+)
+plt.xlabel("Year")
+plt.ylabel("SMP")
+plt.legend()
+plt.grid()
+plt.savefig("best_lstm_prediction.png")
+plt.close()
+
+print("Results saved to lstm_results.csv and best_lstm_prediction.png")
