@@ -113,60 +113,64 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
 
 
 # 모델 평가 및 결과 저장
-try:
-    data = common_df[["Year", "Median_Variable", "SMP"]].sort_values("Year")
-    X = data[["Median_Variable"]].values
-    y = data["SMP"].values
 
-    scaler_X = MinMaxScaler()
-    scaler_y = MinMaxScaler()
-    X_scaled = scaler_X.fit_transform(X)
-    y_scaled = scaler_y.fit_transform(y.reshape(-1, 1))
+data = common_df[["Year", "Median_Variable", "SMP"]].sort_values("Year")
+X = data[["Median_Variable"]].values
+y = data["SMP"].values
+print(f'x:{X},y:{Y}')
 
-    time_steps = 3
-    for layers in hyperparameters["layers"]:
-        for units in hyperparameters["units"]:
-            for epochs in hyperparameters["epochs"]:
-                for batch_size in hyperparameters["batch_size"]:
-                    for activation in hyperparameters["activation"]:
-                        for optimizer in hyperparameters["optimizer"]:
-                            for loss in hyperparameters["loss"]:
-                                future_years, predictions = evaluate_model(
-                                    X_scaled,
-                                    y_scaled,
-                                    scaler_y,
-                                    time_steps,
-                                    {
-                                        "layers": layers,
-                                        "units": units,
-                                        "epochs": epochs,
-                                        "batch_size": batch_size,
-                                        "activation": activation,
-                                        "optimizer": optimizer,
-                                        "loss": loss,
-                                    },
-                                )
-                                # 정답값 (2023, 2024)
-                                true_values = [167.11, 128.39]
-                                mape = mean_absolute_percentage_error(
-                                    true_values[: len(predictions)],
-                                    predictions[: len(true_values)],
-                                )
-                                results.append(
-                                    {
-                                        "Layers": layers,
-                                        "Units": units,
-                                        "Epochs": epochs,
-                                        "Batch Size": batch_size,
-                                        "Activation": activation,
-                                        "Optimizer": optimizer,
-                                        "Loss": loss,
-                                        "Predictions": predictions,
-                                        "MAPE": mape,
-                                    }
-                                )
+scaler_X = MinMaxScaler()
+scaler_y = MinMaxScaler()
+X_scaled = scaler_X.fit_transform(X)
+y_scaled = scaler_y.fit_transform(y.reshape(-1, 1))
+
+time_steps = 3
+for layers in hyperparameters["layers"]:
+    for units in hyperparameters["units"]:
+        for epochs in hyperparameters["epochs"]:
+            for batch_size in hyperparameters["batch_size"]:
+                for activation in hyperparameters["activation"]:
+                    for optimizer in hyperparameters["optimizer"]:
+                        for loss in hyperparameters["loss"]:
+                            future_years, predictions = evaluate_model(
+                                X_scaled,
+                                y_scaled,
+                                scaler_y,
+                                time_steps,
+                                {
+                                    "layers": layers,
+                                    "units": units,
+                                    "epochs": epochs,
+                                    "batch_size": batch_size,
+                                    "activation": activation,
+                                    "optimizer": optimizer,
+                                    "loss": loss,
+                                },
+                            )
+                            # 정답값 (2023, 2024)
+                            true_values = [167.11, 128.39]
+                            mape = mean_absolute_percentage_error(
+                                true_values[: len(predictions)],
+                                predictions[: len(true_values)],
+                            )
+                            results.append(
+                                {
+                                    "Layers": layers,
+                                    "Units": units,
+                                    "Epochs": epochs,
+                                    "Batch Size": batch_size,
+                                    "Activation": activation,
+                                    "Optimizer": optimizer,
+                                    "Loss": loss,
+                                    "Predictions": predictions,
+                                    "MAPE": mape,
+                                }
+            
+                            )
+'''
 except Exception as e:
     print(f"Error occurred: {e}")
+    '''
 
 if results:
     # 결과 저장
