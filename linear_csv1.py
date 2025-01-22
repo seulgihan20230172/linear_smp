@@ -26,6 +26,13 @@ variables = ["Profit", "GNI", "Price"]
 common_df["Median_Variable"] = (
     common_df.groupby("Year")[variables].median().reset_index(drop=True)
 )
+# Median_Variable 열을 숫자형으로 변환
+common_df["Median_Variable"] = pd.to_numeric(
+    common_df["Median_Variable"], errors="coerce"
+)
+
+# NaN 값 제거
+common_df = common_df.dropna(subset=["Median_Variable", "SMP"])
 
 # Median_Variable 확인
 print(common_df[["Year", "Median_Variable"]].head())
