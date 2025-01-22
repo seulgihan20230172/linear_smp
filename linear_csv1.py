@@ -101,7 +101,7 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
     model.fit(X_lstm, y_lstm, epochs=epochs, batch_size=batch_size, verbose=0)
 
     # 예측
-    future_years = list(range(common_df["Year"].min(), 2026))
+    future_years = list(range(int(common_df["Year"]).min(), 2026))
     last_input = X_lstm[-1]
     future_predictions = []
 
@@ -121,7 +121,7 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
 data = common_df[["Year", "Median_Variable", "SMP"]].sort_values("Year")
 X = data[["Median_Variable"]].values
 y = data["SMP"].values
-print(f'x:{X},y:{Y}')
+print(f'x:{X},y:{y}')
 
 scaler_X = MinMaxScaler()
 scaler_y = MinMaxScaler()
