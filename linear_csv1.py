@@ -27,6 +27,9 @@ common_df["Median_Variable"] = (
     common_df.groupby("Year")[variables].median().reset_index(drop=True)
 )
 
+# Median_Variable 확인
+print(common_df[["Year", "Median_Variable"]].head())
+
 # 하이퍼파라미터 조정용 변수
 hyperparameters = {
     "layers": list(range(1, 11)),
@@ -158,25 +161,29 @@ try:
 except Exception as e:
     print(f"Error occurred: {e}")
 
-# 결과 저장
-results_df = pd.DataFrame(results)
-results_df.to_csv("lstm_results.csv", index=False)
+if results:
+    # 결과 저장
+    results_df = pd.DataFrame(results)
+    results_df.to_csv("lstm_results.csv", index=False)
 
-# 최적의 설정 찾기 (최소 MAPE)
-best_result = min(results, key=lambda x: x["MAPE"])
+    # 최적의 설정 찾기 (최소 MAPE)
+    best_result = min(results, key=lambda x: x["MAPE"])
 
-# 최적 설정 그래프 시각화 및 저장
-plt.figure(figsize=(8, 5))
-plt.plot(best_result["Predictions"], label="Predictions", marker="o")
-plt.plot([167.11, 128.39], label="True Values", marker="o")
-plt.title(
-    f"Best Configuration: Layers={best_result['Layers']}, Units={best_result['Units']}, Epochs={best_result['Epochs']}"
-)
-plt.xlabel("Year")
-plt.ylabel("SMP")
-plt.legend()
-plt.grid()
-plt.savefig("best_lstm_prediction.png")
-plt.close()
+    # 최적 설정 그래프 시각화 및 저장
+    plt.figure(figsize=(8, 5))
+    plt.plot(best_result["Predictions"], label="Predictions", marker="o")
+    plt.plot([167.11, 128.39], label="True Values", marker="o")
+    plt.title(
+        f"Best Configuration: Layers={best_result['Layers']}, Units={best_result['Units']}, Epochs={best_result['Epochs']}"
+    )
+    plt.xlabel("Year")
+    plt.ylabel("SMP")
+    plt.legend()
+    plt.grid()
+    plt.savefig("best_lstm_prediction.png")
+    plt.close()
 
-print("Results saved to lstm_results.csv and best_lstm_prediction.png")
+    print("Results saved to lstm_results.csv and best_lstm_prediction.png")
+
+else:
+    print("No results were generated.")
