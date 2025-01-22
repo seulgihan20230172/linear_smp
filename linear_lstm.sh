@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Python 스크립트 실행
-python3 linear_csv.py
+python3 linear_csv1.py
 
 # 결과 파일 분석
 echo "Analyzing results..."
