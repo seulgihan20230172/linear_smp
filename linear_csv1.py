@@ -23,9 +23,13 @@ common_df = common_df.dropna()
 
 # 변수별 데이터 중앙값으로 통합
 variables = ["Profit", "GNI", "Price"]
-common_df["Median_Variable"] = (
-    common_df.groupby("Year")[variables].median().reset_index(drop=True)
+# 변수별 데이터 중앙값으로 통합
+median_values = common_df.groupby("Year")[variables].median().reset_index()
+common_df = common_df.merge(median_values, on="Year", suffixes=("", "_Median"))
+common_df["Median_Variable"] = common_df[[f"{var}_Median" for var in variables]].median(
+    axis=1
 )
+
 
 # 하이퍼파라미터 조정용 변수
 hyperparameters = {
