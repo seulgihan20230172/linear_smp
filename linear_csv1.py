@@ -29,6 +29,16 @@ common_df = common_df.merge(median_values, on="Year", suffixes=("", "_Median"))
 common_df["Median_Variable"] = common_df[[f"{var}_Median" for var in variables]].median(
     axis=1
 )
+# Median_Variable 열을 숫자형으로 변환
+common_df["Median_Variable"] = pd.to_numeric(
+    common_df["Median_Variable"], errors="coerce"
+)
+
+# NaN 값 제거
+common_df = common_df.dropna(subset=["Median_Variable", "SMP"])
+
+# Median_Variable 확인
+print(common_df[["Year", "Median_Variable"]].head())
 
 
 # 하이퍼파라미터 조정용 변수
@@ -162,25 +172,29 @@ try:
 except Exception as e:
     print(f"Error occurred: {e}")
 
-# 결과 저장
-results_df = pd.DataFrame(results)
-results_df.to_csv("lstm_results.csv", index=False)
+if results:
+    # 결과 저장
+    results_df = pd.DataFrame(results)
+    results_df.to_csv("lstm_results.csv", index=False)
 
-# 최적의 설정 찾기 (최소 MAPE)
-best_result = min(results, key=lambda x: x["MAPE"])
+    # 최적의 설정 찾기 (최소 MAPE)
+    best_result = min(results, key=lambda x: x["MAPE"])
 
-# 최적 설정 그래프 시각화 및 저장
-plt.figure(figsize=(8, 5))
-plt.plot(best_result["Predictions"], label="Predictions", marker="o")
-plt.plot([167.11, 128.39], label="True Values", marker="o")
-plt.title(
-    f"Best Configuration: Layers={best_result['Layers']}, Units={best_result['Units']}, Epochs={best_result['Epochs']}"
-)
-plt.xlabel("Year")
-plt.ylabel("SMP")
-plt.legend()
-plt.grid()
-plt.savefig("best_lstm_prediction.png")
-plt.close()
+    # 최적 설정 그래프 시각화 및 저장
+    plt.figure(figsize=(8, 5))
+    plt.plot(best_result["Predictions"], label="Predictions", marker="o")
+    plt.plot([167.11, 128.39], label="True Values", marker="o")
+    plt.title(
+        f"Best Configuration: Layers={best_result['Layers']}, Units={best_result['Units']}, Epochs={best_result['Epochs']}"
+    )
+    plt.xlabel("Year")
+    plt.ylabel("SMP")
+    plt.legend()
+    plt.grid()
+    plt.savefig("best_lstm_prediction.png")
+    plt.close()
 
-print("Results saved to lstm_results.csv and best_lstm_prediction.png")
+    print("Results saved to lstm_results.csv and best_lstm_prediction.png")
+
+else:
+    print("No results were generated.")
