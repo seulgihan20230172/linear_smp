@@ -134,6 +134,7 @@ X = data[["PCA_Variable"]].values
 y = data["SMP"].values
 print(f"x:{X},y:{y}")
 
+
 scaler_X = MinMaxScaler()
 scaler_y = MinMaxScaler()
 X_scaled = scaler_X.fit_transform(X)
