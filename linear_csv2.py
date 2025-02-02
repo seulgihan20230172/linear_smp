@@ -196,7 +196,9 @@ for time_steps in range(3, 6):
 
 if results:
     # 결과 저장
-    print(f"future_years: {len(future_years)}, predictions: {len(predictions)}")
+    print(
+        "future_years: {}, predictions: {}".format(len(future_years), len(predictions))
+    )
 
     results_df = pd.DataFrame(results)
     results_df.to_csv(
@@ -216,9 +218,7 @@ if results:
     plt.figure(figsize=(8, 5))
     plt.plot(best_result["Predictions"], label="Predictions", marker="o")
     plt.plot([167.11, 128.39], label="True Values", marker="o")
-    plt.title(
-        f"Best Configuration: Layers={best_result['Layers']}, Units={best_result['Units']}, Epochs={best_result['Epochs']}"
-    )
+    plt.title("Best Configuration SMP Prediction")
     plt.xlabel("Year")
     plt.ylabel("SMP")
     plt.legend()
