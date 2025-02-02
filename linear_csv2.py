@@ -132,7 +132,7 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
 data = common_df[["Year", "PCA_Variable", "SMP"]].sort_values("Year")
 X = data[["PCA_Variable"]].values
 y = data["SMP"].values
-print(f"x:{X},y:{y}")
+# print(f"x:{X},y:{y}")
 
 
 scaler_X = MinMaxScaler()
