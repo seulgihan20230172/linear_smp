@@ -36,5 +36,14 @@ for item in data:
         print("no dict", type(item))
 
 gni_df = pd.DataFrame(gni_data)
+
+
+# 각 연도를 4번씩 반복하고 quarter를 추가
+gni_df = gni_df.loc[gni_df.index.repeat(4)].reset_index(drop=True)
+gni_df["Quarter"] = [1, 2, 3, 4] * (len(gni_df) // 4)
+
+# 데이터프레임 크기 확인
+print(gni_df.shape)  # (256, 3)
+
 print(gni_df.columns)
 print(gni_df)

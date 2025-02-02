@@ -24,5 +24,12 @@ for element in root.xpath("//열"):
 # DataFrame으로 변환
 price_df = pd.DataFrame(data)
 
+
+# 각 연도를 4번씩 반복하고 quarter를 추가
+price_df = price_df.loc[price_df.index.repeat(4)].reset_index(drop=True)
+price_df["Quarter"] = [1, 2, 3, 4] * (len(price_df) // 4)
+
+# 데이터프레임 크기 확인
+print(price_df.shape)  # (116, 3)
 # DataFrame 출력
 print(price_df)
