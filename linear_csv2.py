@@ -8,6 +8,7 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import mean_absolute_percentage_error
 from tf_keras.models import Sequential
 from tf_keras.layers import LSTM, Dense
+from tqdm import tqdm
 
 # 환경 변수 설정
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -103,7 +104,10 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
     model = create_lstm_model(
         (X_lstm.shape[1], X_lstm.shape[2]), layers, units, activation, optimizer, loss
     )
-    model.fit(X_lstm, y_lstm, epochs=epochs, batch_size=batch_size, verbose=0)
+    for _ in tqdm(range(epochs), desc="Training Progress"):
+        model.fit(
+            X_lstm, y_lstm, epochs=1, batch_size=batch_size, verbose=0, shuffle=False
+        )
 
     # 예측할 연도 개수 설정
     num_predictions = 8
@@ -116,7 +120,7 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
     last_input = X_lstm[-1]
     future_predictions = []
 
-    for _ in range(num_predictions):
+    for _ in tqdm(range(num_predictions), desc="Predicting Future Values"):
         next_pred_scaled = model.predict(
             last_input.reshape(1, time_steps, -1), verbose=0
         )
@@ -140,59 +144,72 @@ scaler_y = MinMaxScaler()
 X_scaled = scaler_X.fit_transform(X)
 y_scaled = scaler_y.fit_transform(y.reshape(-1, 1))
 
-for time_steps in range(3, 6):
-    for layers in hyperparameters["layers"]:
-        for units in hyperparameters["units"]:
-            for epochs in hyperparameters["epochs"]:
-                for batch_size in hyperparameters["batch_size"]:
-                    for activation in hyperparameters["activation"]:
-                        for optimizer in hyperparameters["optimizer"]:
-                            for loss in hyperparameters["loss"]:
-                                future_years, predictions = evaluate_model(
-                                    X_scaled,
-                                    y_scaled,
-                                    scaler_y,
-                                    time_steps,
-                                    {
-                                        "layers": layers,
-                                        "units": units,
-                                        "epochs": epochs,
-                                        "batch_size": batch_size,
-                                        "activation": activation,
-                                        "optimizer": optimizer,
-                                        "loss": loss,
-                                    },
-                                )
-                                # 정답값 (2023, 2024)
-                                true_values = [
-                                    237.61,
-                                    151.19,
-                                    229.65,
-                                    134.87,
-                                    134.99,
-                                    128.41,
-                                    141.13,
-                                    115.14,
-                                ]
-                                mape = mean_absolute_percentage_error(
-                                    true_values[: len(predictions)],
-                                    predictions[: len(true_values)],
-                                )
 
-                                results.append(
-                                    {
-                                        "Layers": layers,
-                                        "Units": units,
-                                        "Epochs": epochs,
-                                        "Batch Size": batch_size,
-                                        "Activation": activation,
-                                        "Optimizer": optimizer,
-                                        "Loss": loss,
-                                        "Predictions": predictions,
-                                        "MAPE": mape,
-                                    }
-                                )
+total_iterations = (
+    len(range(3, 6))
+    * len(hyperparameters["layers"])
+    * len(hyperparameters["units"])
+    * len(hyperparameters["epochs"])
+    * len(hyperparameters["batch_size"])
+    * len(hyperparameters["activation"])
+    * len(hyperparameters["optimizer"])
+    * len(hyperparameters["loss"])
+)
 
+with tqdm(total=total_iterations, desc="Hyperparameter Tuning") as pbar:
+    for time_steps in range(3, 6):
+        for layers in hyperparameters["layers"]:
+            for units in hyperparameters["units"]:
+                for epochs in hyperparameters["epochs"]:
+                    for batch_size in hyperparameters["batch_size"]:
+                        for activation in hyperparameters["activation"]:
+                            for optimizer in hyperparameters["optimizer"]:
+                                for loss in hyperparameters["loss"]:
+                                    future_years, predictions = evaluate_model(
+                                        X_scaled,
+                                        y_scaled,
+                                        scaler_y,
+                                        time_steps,
+                                        {
+                                            "layers": layers,
+                                            "units": units,
+                                            "epochs": epochs,
+                                            "batch_size": batch_size,
+                                            "activation": activation,
+                                            "optimizer": optimizer,
+                                            "loss": loss,
+                                        },
+                                    )
+                                    # 정답값 (2023, 2024)
+                                    true_values = [
+                                        237.61,
+                                        151.19,
+                                        229.65,
+                                        134.87,
+                                        134.99,
+                                        128.41,
+                                        141.13,
+                                        115.14,
+                                    ]
+                                    mape = mean_absolute_percentage_error(
+                                        true_values[: len(predictions)],
+                                        predictions[: len(true_values)],
+                                    )
+
+                                    results.append(
+                                        {
+                                            "Layers": layers,
+                                            "Units": units,
+                                            "Epochs": epochs,
+                                            "Batch Size": batch_size,
+                                            "Activation": activation,
+                                            "Optimizer": optimizer,
+                                            "Loss": loss,
+                                            "Predictions": predictions,
+                                            "MAPE": mape,
+                                        }
+                                    )
+                                    pbar.update(1)
 
 if results:
     # 결과 저장
