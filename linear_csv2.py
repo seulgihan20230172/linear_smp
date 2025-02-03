@@ -218,23 +218,31 @@ if results:
     )
 
     results_df = pd.DataFrame(results)
-    results_df.to_csv(
-        r"C:\Users\hanse\papercoding\linear_smp\lstm_results.csv", index=False
-    )
+    results_df.to_csv("lstm_results.csv", index=False)
     # 최적의 설정 찾기 (최소 MAPE)
     best_result = min(results, key=lambda x: x["MAPE"])
     best_results = []
     best_results.append({"Best Result": best_result})
-    best_results_df = pd.DataFrame(results)
-    best_results_df.to_csv(
-        r"C:\Users\hanse\papercoding\linear_smp\lstm_best_results.csv", index=False
-    )
+    best_results_df = pd.DataFrame(best_results)
+    best_results_df.to_csv("lstm_best_results.csv", index=False)
     print(best_result)
 
     # 최적 설정 그래프 시각화 및 저장
     plt.figure(figsize=(8, 5))
     plt.plot(best_result["Predictions"], label="Predictions", marker="o")
-    plt.plot([167.11, 128.39], label="True Values", marker="o")
+    plt.plot(
+        [
+            237.61,
+            151.19,
+            229.65,
+            134.87,
+            134.99,
+            128.41,
+            141.13,
+            115.14,
+        ],
+        label="True Values",
+    )
     plt.title("Best Configuration SMP Prediction")
     plt.xlabel("Year")
     plt.ylabel("SMP")

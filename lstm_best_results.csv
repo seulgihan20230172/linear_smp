@@ -1,2 +1,0 @@
-Layers,Units,Epochs,Batch Size,Activation,Optimizer,Loss,Predictions,MAPE
-5,16,50,16,relu,adam,mse,"[74.59762, 74.57356, 74.54926, 74.50219, 74.50213, 74.50206, 74.50198, 74.50198]",0.4863827441059469
