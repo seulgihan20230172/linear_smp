@@ -10,10 +10,11 @@ import sys
 
 sys.stdout = open(1, "w", encoding="utf-8", closefd=False)
 
-print(profit_df["Year"].dtype)  # profit_df Year 열 데이터 타입
-print(smp_df["Year"].dtype)
-print(gni_df["Year"].dtype)  # gni_df Year 열 데이터 타입
-print(price_df["Year"].dtype)  # price_df Year
+profit_df["Year"] = profit_df["Year"].astype(int)
+gni_df["Year"] = gni_df["Year"].astype(int)
+price_df["Year"] = price_df["Year"].astype(int)
+smp_df["Year"] = smp_df["Year"].astype(int)
+
 
 # 각 DataFrame에서 공통된 연도 추출
 common_years = set(profit_df["Year"]).intersection(
