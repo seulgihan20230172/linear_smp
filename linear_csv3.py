@@ -6,10 +6,11 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 from sklearn.metrics import mean_absolute_percentage_error
-from tf_keras.models import Sequential
-from tf_keras.layers import LSTM, Dense
-from tqdm import tqdm
+from tf_keras.models import Sequential, Model
+from tf_keras.layers import LSTM, Dense, Input, Multiply, Permute, Lambda, Softmax
+import tensorflow.keras.backend as K
 import tensorflow as tf
+from tqdm import tqdm
 
 
 class QuantileLoss(tf.keras.losses.Loss):
@@ -50,15 +51,14 @@ pca = PCA(n_components=1)
 X = common_df[variables]
 # PCA 적용
 common_df["PCA_Variable"] = pca.fit_transform(X)
-
-# Median_Variable 열을 숫자형으로 변환
 common_df["PCA_Variable"] = pd.to_numeric(common_df["PCA_Variable"], errors="coerce")
-
-# NaN 값 제거
 common_df = common_df.dropna(subset=["PCA_Variable", "SMP"])
-
-# Median_Variable 확인
 print(common_df[["Year", "PCA_Variable"]])
+
+
+# 노이즈 추가
+def add_noise(data, noise_std=0.02):
+    return data + np.random.normal(0, noise_std, data.shape)
 
 
 # 하이퍼파라미터 조정용 변수
@@ -76,20 +76,28 @@ hyperparameters = {
 results = []
 
 
+# 어텐션 레이어 추가
+def attention_layer(inputs):
+    attention = Dense(inputs.shape[1], activation="softmax")(inputs)
+    attention = Multiply()([inputs, attention])
+    return attention
+
+
 # LSTM 모델 생성 함수
-def create_lstm_model(input_shape, layers, units, activation, optimizer, loss):
-    model = Sequential()
+def create_lstm_attention_model(
+    input_shape, layers, units, activation, optimizer, loss
+):
+    inputs = Input(shape=input_shape)
+    x = inputs
+
     for i in range(layers):
         return_sequences = i < layers - 1
-        model.add(
-            LSTM(
-                units,
-                activation=activation,
-                return_sequences=return_sequences,
-                input_shape=input_shape,
-            )
-        )
-    model.add(Dense(1))
+        x = LSTM(units, activation=activation, return_sequences=return_sequences)(x)
+
+    x = attention_layer(x)  # 어텐션 적용
+    output = Dense(1)(x)
+
+    model = Model(inputs, output)
     model.compile(optimizer=optimizer, loss=loss)
     return model
 
@@ -104,6 +112,8 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
     optimizer = hyperparams["optimizer"]
     loss = hyperparams["loss"]
 
+    X_scaled = add_noise(X_scaled)  # 데이터 증강
+
     # 시계열 데이터 생성
     X_lstm, y_lstm = [], []
     for i in range(len(X_scaled) - time_steps):
@@ -115,7 +125,7 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
         raise ValueError("Insufficient data to generate time series inputs.")
 
     # 모델 생성 및 학습
-    model = create_lstm_model(
+    model = create_lstm_attention_model(
         (X_lstm.shape[1], X_lstm.shape[2]), layers, units, activation, optimizer, loss
     )
     for _ in tqdm(range(epochs), desc="Training Progress"):
