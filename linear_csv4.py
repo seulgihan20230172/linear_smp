@@ -146,7 +146,11 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
             shuffle=False,
         )
 
-    # 예측할 연도 개수 설정
+    ### 📌 1. 기존 데이터 (2004-2022) 예측 ###
+    train_predictions_scaled = model.predict(X_lstm, verbose=0)
+    train_predictions = scaler_y.inverse_transform(train_predictions_scaled).flatten()
+
+    ### 📌 2. 미래 예측 (2023-2024) ###
     num_predictions = 8
     future_years = list(
         range(
@@ -165,7 +169,7 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
         future_predictions.append(next_pred[0][0])
         last_input = np.vstack([last_input[1:], next_pred_scaled])
 
-    return future_years, future_predictions
+    return train_predictions, future_years, future_predictions
 
 
 # 모델 평가 및 결과 저장
@@ -203,20 +207,22 @@ with tqdm(total=total_iterations, desc="Hyperparameter Tuning") as pbar:
                         for activation in hyperparameters["activation"]:
                             for optimizer in hyperparameters["optimizer"]:
                                 for loss in hyperparameters["loss"]:
-                                    future_years, predictions = evaluate_model(
-                                        X_scaled,
-                                        y_scaled,
-                                        scaler_y,
-                                        time_steps,
-                                        {
-                                            "layers": layers,
-                                            "units": units,
-                                            "epochs": epochs,
-                                            "batch_size": batch_size,
-                                            "activation": activation,
-                                            "optimizer": optimizer,
-                                            "loss": loss,
-                                        },
+                                    train_predictions, future_years, predictions = (
+                                        evaluate_model(
+                                            X_scaled,
+                                            y_scaled,
+                                            scaler_y,
+                                            time_steps,
+                                            {
+                                                "layers": layers,
+                                                "units": units,
+                                                "epochs": epochs,
+                                                "batch_size": batch_size,
+                                                "activation": activation,
+                                                "optimizer": optimizer,
+                                                "loss": loss,
+                                            },
+                                        )
                                     )
                                     # 정답값 (2023, 2024)
                                     true_values = [
@@ -258,7 +264,9 @@ with tqdm(total=total_iterations, desc="Hyperparameter Tuning") as pbar:
 if results:
     # 결과 저장
     print(
-        "future_years: {}, predictions: {}".format(len(future_years), len(predictions))
+        "train_predictions: {}, future_years: {}, predictions: {}".format(
+            len(train_predictions), len(future_years), len(predictions)
+        )
     )
 
     # 최적의 설정 찾기 (최소 MAPE)
@@ -271,29 +279,44 @@ if results:
 
     # 최적 설정 그래프 시각화 및 저장
     plt.figure(figsize=(8, 5))
-    plt.plot(best_result["Predictions"], label="Predictions", marker="o")
+
+    # 2022년까지의 실제 SMP (검은색)
     plt.plot(
-        [
-            237.61,
-            151.19,
-            229.65,
-            134.87,
-            134.99,
-            128.41,
-            141.13,
-            115.14,
-        ],
-        label="True Values",
+        data["Year"][: len(train_predictions)],
+        data["SMP"].values[: len(train_predictions)],
+        color="black",
+        label="Actual SMP",
+        linewidth=2,
     )
-    plt.title("Best Configuration SMP Prediction")
+
+    # LSTM 모델로 예측된 train SMP (빨간색)
+    plt.plot(
+        data["Year"][: len(train_predictions)],
+        train_predictions,
+        color="red",
+        label="Train Predictions (LSTM)",
+        linestyle="--",
+    )
+
+    # 2023~2024년 동안의 예측된 future SMP (파란색)
+    plt.plot(
+        future_years,
+        best_result["Predictions"],
+        color="blue",
+        label="Future Predictions",
+        marker="o",
+    )
+
+    # 2023~2024년 동안의 실제 SMP (그린색)
+    future_smp = [237.61, 151.19, 229.65, 134.87, 134.99, 128.41, 141.13, 115.14]
+    plt.plot(
+        future_years, future_smp, color="green", label="Future True SMP", marker="x"
+    )
+
     plt.xlabel("Year")
     plt.ylabel("SMP")
+    plt.title("SMP Prediction and True Values (LSTM + Future)")
     plt.legend()
-    plt.grid()
-    plt.savefig("best_lstm_prediction.png")
-    plt.close()
-
-    print("Results saved to lstm_results.csv and best_lstm_prediction.png")
-
-else:
-    print("No results were generated.")
+    plt.grid(True)
+    plt.savefig("smp_predictions_and_truth.png")
+    plt.show()
