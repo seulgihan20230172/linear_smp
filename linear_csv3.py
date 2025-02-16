@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 from sklearn.metrics import mean_absolute_percentage_error
-from tf_keras.models import Sequential, Model
-from tf_keras.layers import LSTM, Dense, Input, Multiply, Permute, Lambda, Softmax
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import LSTM, Dense, Input, Multiply, Permute, Lambda, Softmax
 import tensorflow.keras.backend as K
 import tensorflow as tf
 from tqdm import tqdm
