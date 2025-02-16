@@ -130,7 +130,12 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
     )
     for _ in tqdm(range(epochs), desc="Training Progress"):
         model.fit(
-            X_lstm, y_lstm, epochs=1, batch_size=batch_size, verbose=0, shuffle=False
+            X_lstm,
+            y_lstm,
+            epochs=epochs,
+            batch_size=batch_size,
+            verbose=0,
+            shuffle=False,
         )
 
     # 예측할 연도 개수 설정
@@ -179,6 +184,7 @@ total_iterations = (
     * len(hyperparameters["optimizer"])
     * len(hyperparameters["loss"])
 )
+count = 0
 
 with tqdm(total=total_iterations, desc="Hyperparameter Tuning") as pbar:
     for time_steps in range(3, 6):
@@ -233,6 +239,12 @@ with tqdm(total=total_iterations, desc="Hyperparameter Tuning") as pbar:
                                             "MAPE": mape,
                                         }
                                     )
+                                    count += 1
+                                    if count % 10 == 0:
+                                        results_df = pd.DataFrame(results)
+                                        results_df.to_csv(
+                                            "lstm_results.csv", index=False
+                                        )
                                     pbar.update(1)
 
 if results:
@@ -241,8 +253,6 @@ if results:
         "future_years: {}, predictions: {}".format(len(future_years), len(predictions))
     )
 
-    results_df = pd.DataFrame(results)
-    results_df.to_csv("lstm_results.csv", index=False)
     # 최적의 설정 찾기 (최소 MAPE)
     best_result = min(results, key=lambda x: x["MAPE"])
     best_results = []
