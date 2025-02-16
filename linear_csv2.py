@@ -80,7 +80,7 @@ results = []
 def create_lstm_model(input_shape, layers, units, activation, optimizer, loss):
     model = Sequential()
     for i in range(layers):
-        return_sequences = i < layers - 1
+        return_sequences = i < (layers - 1)
         model.add(
             LSTM(
                 units,
@@ -118,10 +118,10 @@ def evaluate_model(X_scaled, y_scaled, scaler_y, time_steps, hyperparams):
     model = create_lstm_model(
         (X_lstm.shape[1], X_lstm.shape[2]), layers, units, activation, optimizer, loss
     )
-    for _ in tqdm(range(epochs), desc="Training Progress"):
-        model.fit(
-            X_lstm, y_lstm, epochs=1, batch_size=batch_size, verbose=0, shuffle=False
-        )
+    # for _ in tqdm(range(epochs), desc="Training Progress"):
+    model.fit(
+        X_lstm, y_lstm, epochs=epochs, batch_size=batch_size, verbose=1, shuffle=False
+    )
 
     # 예측할 연도 개수 설정
     num_predictions = 8
