@@ -1,0 +1,2 @@
+Best Result
+"{'Layers': 7, 'Units': 64, 'Epochs': 200, 'Batch Size': 32, 'Activation': 'relu', 'Optimizer': 'adam', 'Loss': 'huber_loss', 'Predictions': [196.64993, 101.64168, 263.0178, 144.08147, 220.95404, 795.4948, 929.3064, 1439.5103], 'MAPE': 2.954061968466206}"

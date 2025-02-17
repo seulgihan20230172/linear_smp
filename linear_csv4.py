@@ -198,7 +198,7 @@ y_scaled = scaler_y.fit_transform(y.reshape(-1, 1))
 
 
 total_iterations = (
-    len(range(3, 6))
+    len(range(3, 4))
     * len(hyperparameters["layers"])
     * len(hyperparameters["units"])
     * len(hyperparameters["epochs"])
@@ -210,7 +210,7 @@ total_iterations = (
 count = 0
 
 with tqdm(total=total_iterations, desc="Hyperparameter Tuning") as pbar:
-    for time_steps in range(3, 6):
+    for time_steps in range(3,4):
         for layers in hyperparameters["layers"]:
             for units in hyperparameters["units"]:
                 for epochs in hyperparameters["epochs"]:
