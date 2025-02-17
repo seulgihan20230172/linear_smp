@@ -70,6 +70,7 @@ def add_noise(data, noise_std=0.02):
 
 
 # 하이퍼파라미터 조정용 변수
+"""
 hyperparameters = {
     "layers": [3, 5, 7],
     "units": [32, 50, 64],
@@ -78,6 +79,16 @@ hyperparameters = {
     "activation": ["relu", "tanh"],
     "optimizer": ["adam", "rmsprop"],
     "loss": ["mse", "huber_loss", QuantileLoss(0.1), QuantileLoss(0.9)],
+}
+"""
+hyperparameters = {
+    "layers": [7],
+    "units": [64],
+    "epochs": [200],
+    "batch_size": [32],
+    "activation": ["relu"],
+    "optimizer": ["adam"],
+    "loss": ["huber_loss"],
 }
 
 # 결과 저장
